@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SEA Fuel Watch — Southeast Asia & Australia Fuel Shortage Tracker</title>
+    <meta name="description" content="Real-time fuel shortage tracker for Southeast Asia and Australia. Monitor fuel prices, supply disruptions, and shortage severity across the region.">
+    <meta property="og:title" content="SEA Fuel Watch — Fuel Shortage Tracker">
+    <meta property="og:description" content="Track fuel shortages across Southeast Asia & Australia in real-time. Prices, supply levels, disruption alerts.">
+    <meta property="og:type" content="website">
+    <meta name="twitter:card" content="summary_large_image">
+
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-left">
+            <div class="logo">
+                <span class="logo-icon">⛽</span>
+                <div>
+                    <h1>SEA Fuel Watch</h1>
+                    <span class="subtitle">Southeast Asia & Australia Fuel Shortage Tracker</span>
+                </div>
+            </div>
+        </div>
+        <div class="header-right">
+            <div class="global-price">
+                <span class="label">Brent Crude</span>
+                <span class="value" id="brent-price">$94.20</span>
+                <span class="change negative">▲ 32.7%</span>
+            </div>
+            <div class="global-price">
+                <span class="label">WTI</span>
+                <span class="value" id="wti-price">$89.50</span>
+                <span class="change negative">▲ 28.1%</span>
+            </div>
+            <div class="last-updated">
+                <span class="pulse"></span>
+                Updated <span id="last-updated-time">Mar 23, 2026 21:00 ICT</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Summary Bar -->
+    <div class="summary-bar">
+        <div class="summary-item critical">
+            <span class="summary-count" id="critical-count">3</span>
+            <span class="summary-label">Critical</span>
+        </div>
+        <div class="summary-item severe">
+            <span class="summary-count" id="severe-count">4</span>
+            <span class="summary-label">Severe</span>
+        </div>
+        <div class="summary-item moderate">
+            <span class="summary-count" id="moderate-count">3</span>
+            <span class="summary-label">Moderate</span>
+        </div>
+        <div class="summary-item normal">
+            <span class="summary-count" id="normal-count">2</span>
+            <span class="summary-label">Stable</span>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <main class="main">
+        <!-- Map Section -->
+        <section class="map-section">
+            <div id="map"></div>
+            <div class="map-legend">
+                <h3>Shortage Severity</h3>
+                <div class="legend-item"><span class="legend-dot critical"></span>Critical — Widespread outages</div>
+                <div class="legend-item"><span class="legend-dot severe"></span>Severe — Rationing in effect</div>
+                <div class="legend-item"><span class="legend-dot moderate"></span>Moderate — Supply constraints</div>
+                <div class="legend-item"><span class="legend-dot normal"></span>Stable — Normal supply</div>
+            </div>
+        </section>
+
+        <!-- Country Cards -->
+        <section class="cards-section">
+            <h2 class="section-title">Country Status</h2>
+            <div class="cards-grid" id="country-cards"></div>
+        </section>
+
+        <!-- Global Context -->
+        <section class="context-section">
+            <h2 class="section-title">Global Context</h2>
+            <div class="context-grid">
+                <div class="context-card">
+                    <h3>⚔️ Iran-US Conflict Impact</h3>
+                    <p>Military operations in the Strait of Hormuz have disrupted approximately 20% of global oil transit. Tanker insurance premiums have surged 400%, with many shippers avoiding the Persian Gulf entirely.</p>
+                    <span class="context-date">Updated Mar 23, 2026</span>
+                </div>
+                <div class="context-card">
+                    <h3>🛢️ OPEC+ Response</h3>
+                    <p>Emergency OPEC+ meeting scheduled for March 25. Saudi Arabia and UAE signaled willingness to increase production, but logistical bottlenecks limit short-term relief. Current spare capacity estimated at 3.5 mb/d.</p>
+                    <span class="context-date">Updated Mar 22, 2026</span>
+                </div>
+                <div class="context-card">
+                    <h3>🚢 Supply Chain</h3>
+                    <p>Rerouting via Cape of Good Hope adds 10-15 days to Asia-bound shipments. Singapore refining margins at 5-year highs. Regional fuel reserves: Cambodia 20 days, Vietnam 22 days, Thailand 60 days.</p>
+                    <span class="context-date">Updated Mar 23, 2026</span>
+                </div>
+                <div class="context-card">
+                    <h3>📊 Price Trajectory</h3>
+                    <p>Brent surged from $71/bbl (Feb 27) to $94/bbl (Mar 9). Analysts project $100-120/bbl if conflict extends beyond Q1. IEA coordinated strategic reserve release of 60 million barrels on Mar 15.</p>
+                    <span class="context-date">Updated Mar 23, 2026</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- News Feed -->
+        <section class="news-section">
+            <h2 class="section-title">Latest Updates</h2>
+            <div class="news-feed" id="news-feed"></div>
+        </section>
+
+        <!-- Data Sources -->
+        <section class="sources-section">
+            <h2 class="section-title">Data Sources & Methodology</h2>
+            <p class="sources-note">Data compiled from IEA Oil Market Reports, EIA Short-Term Energy Outlook, GlobalPetrolPrices.com, ASEAN Energy Centre, national petroleum authorities, and verified news reports. Shortage severity assessed using fuel reserve levels, price deviation from 90-day average, reported station outages, and government rationing measures.</p>
+            <div class="source-links">
+                <a href="https://www.iea.org/data-and-statistics/data-product/oil-market-report-omr" target="_blank">IEA OMR</a>
+                <a href="https://www.eia.gov/outlooks/steo/" target="_blank">EIA STEO</a>
+                <a href="https://www.globalpetrolprices.com/" target="_blank">GlobalPetrolPrices</a>
+                <a href="https://www.oilpriceapi.com/" target="_blank">OilPriceAPI</a>
+                <a href="https://aseanenergy.org/" target="_blank">ASEAN Energy Centre</a>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <p>SEA Fuel Watch — Open source fuel shortage tracker. Data is for informational purposes only.</p>
+        <p>Built with care. <a href="https://github.com" target="_blank">GitHub</a> · Last data refresh: Mar 23, 2026</p>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="data.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
