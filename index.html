@@ -82,7 +82,27 @@
 
         <!-- Country Cards -->
         <section class="cards-section">
-            <h2 class="section-title">Country Status</h2>
+            <div class="section-header">
+                <h2 class="section-title">Country Status</h2>
+                <div class="filter-row">
+                    <div class="filters" id="filters"></div>
+                    <select class="currency-select" id="currency-select">
+                        <option value="auto">Auto (Local)</option>
+                        <option value="usd">USD $</option>
+                        <option value="THB">THB ฿</option>
+                        <option value="VND">VND ₫</option>
+                        <option value="PHP">PHP ₱</option>
+                        <option value="IDR">IDR Rp</option>
+                        <option value="MYR">MYR RM</option>
+                        <option value="SGD">SGD S$</option>
+                        <option value="MMK">MMK K</option>
+                        <option value="LAK">LAK ₭</option>
+                        <option value="KHR">KHR ៛</option>
+                        <option value="BND">BND B$</option>
+                        <option value="AUD">AUD A$</option>
+                    </select>
+                </div>
+            </div>
             <div class="cards-grid" id="country-cards"></div>
         </section>
 

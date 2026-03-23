@@ -223,6 +223,108 @@ a:hover { opacity: 0.7; }
   margin-bottom: 20px;
 }
 
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 4px;
+}
+
+.section-header .section-title {
+  margin-bottom: 0;
+}
+
+.filter-row {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.filter-row::before {
+  display: none;
+}
+
+.filters {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.filter-divider {
+  width: 1px;
+  height: 16px;
+  background: var(--border);
+}
+
+.filter-btn {
+  font-family: var(--font-sans);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 5px 12px;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.3s var(--ease);
+}
+
+.filter-btn:hover {
+  border-color: var(--border-hover);
+  color: var(--text-secondary);
+}
+
+.filter-btn.active {
+  color: var(--text-primary);
+  border-color: var(--border-hover);
+  background: var(--bg-subtle);
+}
+
+.filter-btn.active[data-filter="critical"] { color: var(--critical); border-color: rgba(201, 123, 123, 0.3); }
+.filter-btn.active[data-filter="severe"] { color: var(--severe); border-color: rgba(201, 165, 107, 0.3); }
+.filter-btn.active[data-filter="moderate"] { color: var(--moderate); border-color: rgba(184, 176, 123, 0.3); }
+.filter-btn.active[data-filter="normal"] { color: var(--normal); border-color: rgba(123, 171, 142, 0.3); }
+
+.currency-select {
+  font-family: var(--font-sans);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  padding: 5px 10px;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.3s var(--ease);
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1L5 5L9 1' stroke='%234a5260' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  padding-right: 24px;
+}
+
+.currency-select:hover {
+  border-color: var(--border-hover);
+  color: var(--text-primary);
+}
+
+.currency-select:focus {
+  outline: none;
+  border-color: var(--border-hover);
+}
+
+.currency-select option {
+  background: var(--bg-card);
+  color: var(--text-primary);
+}
+
 /* ── Map ──────────────────────────────────────────── */
 .map-section { position: relative; }
 
@@ -702,6 +804,75 @@ a:hover { opacity: 0.7; }
 .country-card:nth-child(12) { animation-delay: 0.48s; }
 
 .news-item:nth-child(n) { animation-delay: calc(0.04s * var(--i, 1)); }
+
+/* ── City Accordion ─────────────────────────────── */
+.city-accordion {
+  margin-top: 10px;
+  border-top: 1px solid rgba(255,255,255,0.06);
+  padding-top: 8px;
+}
+
+.city-toggle {
+  background: none;
+  border: none;
+  color: #6e7681;
+  font-size: 11px;
+  font-family: 'Inter', sans-serif;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 0;
+  transition: color 0.2s;
+  width: 100%;
+}
+.city-toggle:hover { color: #b0b8c1; }
+
+.city-toggle-icon {
+  display: inline-block;
+  font-size: 14px;
+  transition: transform 0.2s;
+  width: 12px;
+  text-align: center;
+}
+.city-toggle[aria-expanded="true"] .city-toggle-icon {
+  transform: rotate(90deg);
+}
+
+.city-list {
+  padding: 6px 0 2px 0;
+}
+
+.city-row {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 8px;
+  align-items: baseline;
+  padding: 4px 0;
+  font-size: 11px;
+  border-bottom: 1px solid rgba(255,255,255,0.03);
+}
+.city-row:last-child { border-bottom: none; }
+
+.city-name {
+  color: #b0b8c1;
+  font-weight: 500;
+}
+
+.city-price {
+  color: #e2e8f0;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.city-local {
+  color: #6e7681;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  min-width: 60px;
+  text-align: right;
+}
 
 /* ── Responsive ─────────────────────────────────── */
 @media (max-width: 768px) {
