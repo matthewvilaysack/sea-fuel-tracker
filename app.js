@@ -108,7 +108,7 @@
       // City markers (shown at higher zoom)
       if (country.cities && country.cities.length > 0) {
         country.cities.forEach(city => {
-          if (!city.gasoline.usd) return;
+          if (!city.latlng || !city.gasoline || !city.gasoline.usd) return;
           const cityMarker = L.circleMarker(city.latlng, {
             radius: 5,
             fillColor: '#7eb8da',
@@ -144,11 +144,11 @@
             iconSize: [60, 14],
             iconAnchor: [30, -8]
           });
-          const cityLabelMarker = L.marker(city.latlng, { icon: cityLabel, interactive: false }).addTo(map);
+          const cityLabelMarker = city.latlng ? L.marker(city.latlng, { icon: cityLabel, interactive: false }).addTo(map) : null;
 
           // Store for zoom-based visibility
           cityMarker._isCityMarker = true;
-          cityLabelMarker._isCityLabel = true;
+          if (cityLabelMarker) cityLabelMarker._isCityLabel = true;
         });
       }
     });
@@ -184,6 +184,7 @@
     const sorted = [...FUEL_DATA.countries].sort((a, b) => order[a.severity] - order[b.severity]);
 
     sorted.forEach(country => {
+      try {
       const reservePercent = Math.min((country.reserveDays / 90) * 100, 100);
       const reserveColor = country.reserveDays < 25 ? SEVERITY_COLORS.critical :
                            country.reserveDays < 45 ? SEVERITY_COLORS.severe :
@@ -229,10 +230,68 @@
           <span class="reserve-label">${country.reserveDays}d reserves</span>
         </div>
         <p class="card-summary">${country.summary}</p>
+        <div class="card-sparkline" data-country="${country.id}"></div>
+        <div class="card-chart-expand" data-country="${country.id}" hidden>
+          <div class="chart-controls">
+            <button class="chart-range-btn active" data-range="7">W</button>
+            <button class="chart-range-btn" data-range="30">M</button>
+          </div>
+          <div class="chart-expanded" data-country="${country.id}"></div>
+        </div>
         <div class="card-factors">
           ${country.factors.map(f => `<span class="factor-tag">${f}</span>`).join('')}
         </div>
-        ${country.cities && country.cities.length > 0 ? `
+        ${country.fuelTypes && Object.keys(country.fuelTypes || {}).length > 0 ? `
+        <div class="city-accordion">
+          <button class="city-toggle" aria-expanded="false">
+            <span class="city-toggle-icon">›</span>
+            <span>${Object.keys(country.fuelTypes).length} fuel types · national pricing</span>
+          </button>
+          <div class="city-list" hidden>
+            ${Object.entries(country.fuelTypes).map(([name, data]) => `
+              <div class="city-row">
+                <span class="city-name">${name}</span>
+                <span class="city-price">$${data.usd}</span>
+                <span class="city-local">${data.local}/L</span>
+              </div>
+            `).join('')}
+            ${country.cities && country.cities.length > 0 ? `
+            <div class="detail-subheader">Cities (uniform national price)</div>
+            ${country.cities.map(city => `
+              <div class="city-row">
+                <span class="city-name">${city.name}</span>
+                <span class="city-price">${city.gasoline.usd ? `$${city.gasoline.usd}` : '—'}</span>
+                <span class="city-local">${city.gasoline.local !== 'N/A' ? city.gasoline.local : ''}</span>
+              </div>
+            `).join('')}` : ''}
+          </div>
+        </div>
+        ` : ''}
+        ${country.provinces && country.provinces.length > 0 ? `
+        <div class="city-accordion">
+          <button class="city-toggle" aria-expanded="false">
+            <span class="city-toggle-icon">›</span>
+            <span>${country.provinces.length} provinces tracked</span>
+          </button>
+          <div class="city-list" hidden>
+            <div class="province-header-row">
+              <span></span>
+              <span class="province-col-label">G95</span>
+              <span class="province-col-label">Regular</span>
+              <span class="province-col-label">Diesel</span>
+            </div>
+            ${country.provinces.map(prov => `
+              <div class="province-row">
+                <span class="city-name">${prov.name}</span>
+                <span class="city-price">${prov.gasoline95 ? `$${prov.gasoline95.usd}` : '—'}</span>
+                <span class="city-price">${prov.regular ? `$${prov.regular.usd}` : '—'}</span>
+                <span class="city-price">${prov.diesel ? `$${prov.diesel.usd}` : '—'}</span>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+        ` : ''}
+        ${(!country.fuelTypes || Object.keys(country.fuelTypes || {}).length === 0) ? (country.cities && country.cities.length > 0 && (!country.provinces || country.provinces.length === 0) ? `
         <div class="city-accordion">
           <button class="city-toggle" aria-expanded="false">
             <span class="city-toggle-icon">›</span>
@@ -248,7 +307,7 @@
             `).join('')}
           </div>
         </div>
-        ` : ''}
+        ` : '') : ''}
       `;
 
       // Wire up city accordion toggle
@@ -264,18 +323,96 @@
       }
 
       container.appendChild(card);
+      } catch(err) { console.error('Card render error for', country.id, err); }
     });
   }
 
   // ── News Feed ────────────────────────────────────────────────────
+  // Country keywords for auto-tagging news
+  const COUNTRY_KEYWORDS = {
+    'Myanmar': ['myanmar', 'yangon', 'mandalay', 'naypyidaw', 'burmese'],
+    'Thailand': ['thailand', 'thai', 'bangkok', 'phuket', 'chiang mai'],
+    'Laos': ['laos', 'lao', 'vientiane', 'luang prabang'],
+    'Cambodia': ['cambodia', 'phnom penh', 'siem reap', 'khmer'],
+    'Vietnam': ['vietnam', 'vietnamese', 'hanoi', 'ho chi minh', 'saigon'],
+    'Philippines': ['philippines', 'filipino', 'manila', 'cebu', 'davao', 'jeepney'],
+    'Indonesia': ['indonesia', 'indonesian', 'jakarta', 'pertamina', 'bali'],
+    'Malaysia': ['malaysia', 'malaysian', 'kuala lumpur', 'petronas'],
+    'Singapore': ['singapore', 'singaporean'],
+    'Brunei': ['brunei'],
+    'Australia': ['australia', 'australian', 'sydney', 'melbourne'],
+    'Timor-Leste': ['timor', 'timorese']
+  };
+
+  function detectCountries(text) {
+    const lower = text.toLowerCase();
+    const matches = [];
+    for (const [country, keywords] of Object.entries(COUNTRY_KEYWORDS)) {
+      if (keywords.some(kw => lower.includes(kw))) matches.push(country);
+    }
+    return matches.length ? matches : ['Regional'];
+  }
+
+  let activeNewsFilter = 'all';
+
+  function initNewsFilters() {
+    const container = document.getElementById('news-filters');
+    const btn = document.createElement('button');
+    btn.className = 'filter-btn active';
+    btn.dataset.filter = 'all';
+    btn.textContent = 'All';
+    btn.addEventListener('click', () => {
+      activeNewsFilter = 'all';
+      container.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      filterNews();
+    });
+    container.appendChild(btn);
+
+    // Get unique countries from news
+    const countriesInNews = new Set();
+    NEWS_DATA.forEach(item => {
+      const countries = item.countries || detectCountries(item.title);
+      countries.forEach(c => countriesInNews.add(c));
+    });
+
+    [...countriesInNews].sort().forEach(country => {
+      const b = document.createElement('button');
+      b.className = 'filter-btn';
+      b.dataset.filter = country;
+      b.textContent = country;
+      b.addEventListener('click', () => {
+        activeNewsFilter = country;
+        container.querySelectorAll('.filter-btn').forEach(x => x.classList.remove('active'));
+        b.classList.add('active');
+        filterNews();
+      });
+      container.appendChild(b);
+    });
+  }
+
+  function filterNews() {
+    document.querySelectorAll('.news-item').forEach(el => {
+      if (activeNewsFilter === 'all') {
+        el.style.display = '';
+      } else {
+        const tags = el.dataset.countries || '';
+        el.style.display = tags.includes(activeNewsFilter) ? '' : 'none';
+      }
+    });
+  }
+
   function renderNews() {
     const container = document.getElementById('news-feed');
     NEWS_DATA.forEach((item, i) => {
+      try {
+      const countries = item.countries || detectCountries(item.title);
       const el = document.createElement('a');
       el.href = item.url;
       el.target = '_blank';
       el.rel = 'noopener';
       el.className = 'news-item';
+      el.dataset.countries = countries.join(',');
       el.style.setProperty('--i', i + 1);
       el.innerHTML = `
         <span class="news-category ${item.category}">${item.category}</span>
@@ -283,11 +420,13 @@
           <div class="news-title">${item.title}</div>
           <div class="news-meta">
             <span class="news-source">${item.source}</span>
+            ${countries.filter(c => c !== 'Regional').map(c => `<span class="news-country-tag">${c}</span>`).join('')}
             <span class="news-date">${item.date}</span>
           </div>
         </div>
       `;
       container.appendChild(el);
+      } catch(err) { console.error('News render error', err); }
     });
   }
 
@@ -317,6 +456,11 @@
       if (json.fuelData.exchangeRates) {
         USD_RATES = json.fuelData.exchangeRates;
         console.log('Loaded live exchange rates');
+      }
+      if (json.priceHistory && typeof PRICE_HISTORY !== 'undefined') {
+        Object.assign(PRICE_HISTORY, json.priceHistory);
+      } else if (json.priceHistory) {
+        window.PRICE_HISTORY = json.priceHistory;
       }
       console.log('Loaded live data from API');
     } catch (e) {
@@ -445,6 +589,176 @@
     });
   }
 
+  // ── Sparklines & Charts ──────────────────────────────────────────
+  const SEVERITY_CSS = {
+    critical: 'var(--critical)', severe: 'var(--severe)',
+    moderate: 'var(--moderate)', normal: 'var(--normal)'
+  };
+
+  function svgPath(points, w, h, padding = 2) {
+    if (points.length < 2) return '';
+    const min = Math.min(...points);
+    const max = Math.max(...points);
+    const range = max - min || 1;
+    const xStep = (w - padding * 2) / (points.length - 1);
+    return points.map((v, i) => {
+      const x = padding + i * xStep;
+      const y = padding + (1 - (v - min) / range) * (h - padding * 2);
+      return `${i === 0 ? 'M' : 'L'}${x.toFixed(1)},${y.toFixed(1)}`;
+    }).join(' ');
+  }
+
+  function svgAreaPath(points, w, h, padding = 2) {
+    const path = svgPath(points, w, h, padding);
+    if (!path) return '';
+    const xStep = (w - padding * 2) / (points.length - 1);
+    const lastX = padding + (points.length - 1) * xStep;
+    return `${path} L${lastX.toFixed(1)},${(h - padding).toFixed(1)} L${padding},${(h - padding).toFixed(1)} Z`;
+  }
+
+  function renderSparklines() {
+    if (typeof PRICE_HISTORY === 'undefined') return;
+    document.querySelectorAll('.card-sparkline').forEach(el => {
+      const cid = el.dataset.country;
+      const history = PRICE_HISTORY[cid];
+      if (!history || history.length < 2) return;
+      const last14 = history.slice(-14);
+      const gasPoints = last14.map(d => d.gasoline);
+      const country = FUEL_DATA.countries.find(c => c.id === cid);
+      const color = country ? SEVERITY_CSS[country.severity] : 'var(--accent)';
+      const w = 200, h = 32;
+      el.innerHTML = `<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" class="sparkline-svg">
+        <path d="${svgAreaPath(gasPoints, w, h)}" fill="${color}" opacity="0.06"/>
+        <path d="${svgPath(gasPoints, w, h)}" fill="none" stroke="${color}" stroke-width="1.5" opacity="0.5"/>
+      </svg>`;
+    });
+  }
+
+  function renderExpandedChart(container, cid, range) {
+    const history = (typeof PRICE_HISTORY !== 'undefined') ? PRICE_HISTORY[cid] : null;
+    if (!history || history.length < 2) { container.innerHTML = ''; return; }
+    const data = history.slice(-range);
+    if (data.length < 2) { container.innerHTML = ''; return; }
+
+    const country = FUEL_DATA.countries.find(c => c.id === cid);
+    const dieselColor = country ? SEVERITY_CSS[country.severity] : 'var(--severe)';
+    const gasColor = 'var(--accent)';
+    const w = 400, h = 120, pad = 28;
+
+    const gasPoints = data.map(d => d.gasoline);
+    const dieselPoints = data.map(d => d.diesel);
+    const allPoints = [...gasPoints, ...dieselPoints];
+    const min = Math.min(...allPoints);
+    const max = Math.max(...allPoints);
+    const range_ = max - min || 0.1;
+
+    const xStep = (w - pad * 2) / (data.length - 1);
+    const toY = v => pad + (1 - (v - min) / range_) * (h - pad * 2);
+    const toX = i => pad + i * xStep;
+
+    const gasPath = gasPoints.map((v, i) => `${i === 0 ? 'M' : 'L'}${toX(i).toFixed(1)},${toY(v).toFixed(1)}`).join(' ');
+    const dieselPath = dieselPoints.map((v, i) => `${i === 0 ? 'M' : 'L'}${toX(i).toFixed(1)},${toY(v).toFixed(1)}`).join(' ');
+
+    const gasArea = `${gasPath} L${toX(data.length-1).toFixed(1)},${(h-pad).toFixed(1)} L${pad},${(h-pad).toFixed(1)} Z`;
+    const dieselArea = `${dieselPath} L${toX(data.length-1).toFixed(1)},${(h-pad).toFixed(1)} L${pad},${(h-pad).toFixed(1)} Z`;
+
+    // Y-axis: 3 ticks
+    const yTicks = [min, (min + max) / 2, max];
+    const gridLines = yTicks.map(v => `<line x1="${pad}" x2="${w-pad}" y1="${toY(v).toFixed(1)}" y2="${toY(v).toFixed(1)}" stroke="var(--border)" stroke-width="0.5"/>`).join('');
+    const yLabels = yTicks.map(v => `<text x="${pad-4}" y="${toY(v).toFixed(1)}" text-anchor="end" dominant-baseline="middle" fill="var(--text-muted)" font-size="9" font-family="var(--font-mono)">$${v.toFixed(2)}</text>`).join('');
+
+    // X-axis: start and end dates
+    const startDate = data[0].date.slice(5); // MM-DD
+    const endDate = data[data.length-1].date.slice(5);
+    const xLabels = `<text x="${pad}" y="${h-6}" text-anchor="start" fill="var(--text-muted)" font-size="9" font-family="var(--font-mono)">${startDate}</text>
+      <text x="${w-pad}" y="${h-6}" text-anchor="end" fill="var(--text-muted)" font-size="9" font-family="var(--font-mono)">${endDate}</text>`;
+
+    // Legend
+    const legend = `<text x="${w-pad}" y="14" text-anchor="end" fill="var(--text-muted)" font-size="9">
+        <tspan fill="${gasColor}">● </tspan>Gas
+        <tspan fill="${dieselColor}"> ● </tspan>Diesel
+      </text>`;
+
+    // Tooltip overlay (invisible rects per data point)
+    const tooltipRects = data.map((d, i) => {
+      const rw = (w - pad * 2) / data.length;
+      return `<rect x="${(toX(i) - rw/2).toFixed(1)}" y="${pad}" width="${rw.toFixed(1)}" height="${h - pad*2}" fill="transparent" class="chart-hover-rect" data-idx="${i}" data-date="${d.date}" data-gas="${d.gasoline}" data-diesel="${d.diesel}"/>`;
+    }).join('');
+
+    container.innerHTML = `<svg viewBox="0 0 ${w} ${h}" class="expanded-chart-svg">
+      ${gridLines}${yLabels}${xLabels}${legend}
+      <path d="${gasArea}" fill="${gasColor}" opacity="0.05"/>
+      <path d="${dieselArea}" fill="${dieselColor}" opacity="0.05"/>
+      <path d="${gasPath}" fill="none" stroke="${gasColor}" stroke-width="2" opacity="0.7"/>
+      <path d="${dieselPath}" fill="none" stroke="${dieselColor}" stroke-width="2" opacity="0.7"/>
+      ${tooltipRects}
+      <line class="chart-crosshair" x1="0" y1="${pad}" x2="0" y2="${h-pad}" stroke="var(--text-muted)" stroke-width="0.5" opacity="0" stroke-dasharray="2,2"/>
+      <g class="chart-tooltip-group" opacity="0">
+        <rect class="chart-tooltip-bg" rx="4" ry="4" fill="var(--bg-card)" stroke="var(--border)" stroke-width="0.5"/>
+        <text class="chart-tooltip-text" font-size="9" font-family="var(--font-mono)" fill="var(--text-primary)"></text>
+      </g>
+    </svg>`;
+
+    // Wire tooltip hover
+    const svg = container.querySelector('.expanded-chart-svg');
+    const crosshair = svg.querySelector('.chart-crosshair');
+    const ttGroup = svg.querySelector('.chart-tooltip-group');
+    const ttBg = svg.querySelector('.chart-tooltip-bg');
+    const ttText = svg.querySelector('.chart-tooltip-text');
+
+    svg.querySelectorAll('.chart-hover-rect').forEach(rect => {
+      rect.addEventListener('mouseenter', e => {
+        const idx = +rect.dataset.idx;
+        const x = toX(idx);
+        crosshair.setAttribute('x1', x); crosshair.setAttribute('x2', x);
+        crosshair.setAttribute('opacity', '0.5');
+
+        const label = `${rect.dataset.date.slice(5)}  ⛽$${parseFloat(rect.dataset.gas).toFixed(2)}  🛢️$${parseFloat(rect.dataset.diesel).toFixed(2)}`;
+        ttText.textContent = label;
+        const textW = label.length * 5.4;
+        const ttX = Math.min(Math.max(x - textW/2, 2), w - textW - 4);
+        ttBg.setAttribute('x', ttX - 3); ttBg.setAttribute('y', pad - 18);
+        ttBg.setAttribute('width', textW + 6); ttBg.setAttribute('height', 15);
+        ttText.setAttribute('x', ttX); ttText.setAttribute('y', pad - 8);
+        ttGroup.setAttribute('opacity', '1');
+      });
+      rect.addEventListener('mouseleave', () => {
+        crosshair.setAttribute('opacity', '0');
+        ttGroup.setAttribute('opacity', '0');
+      });
+    });
+  }
+
+  function initChartExpanders() {
+    document.querySelectorAll('.card-sparkline').forEach(el => {
+      el.addEventListener('click', () => {
+        const cid = el.dataset.country;
+        const expandEl = el.nextElementSibling;
+        const isHidden = expandEl.hidden;
+        // Close all others
+        document.querySelectorAll('.card-chart-expand').forEach(e => e.hidden = true);
+        if (isHidden) {
+          expandEl.hidden = false;
+          const chartContainer = expandEl.querySelector('.chart-expanded');
+          const activeBtn = expandEl.querySelector('.chart-range-btn.active');
+          renderExpandedChart(chartContainer, cid, parseInt(activeBtn.dataset.range));
+        }
+      });
+    });
+
+    document.querySelectorAll('.chart-range-btn').forEach(btn => {
+      btn.addEventListener('click', e => {
+        e.stopPropagation();
+        const parent = btn.closest('.card-chart-expand');
+        parent.querySelectorAll('.chart-range-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        const cid = parent.dataset.country;
+        const chartContainer = parent.querySelector('.chart-expanded');
+        renderExpandedChart(chartContainer, cid, parseInt(btn.dataset.range));
+      });
+    });
+  }
+
   // ── Init ─────────────────────────────────────────────────────────
   document.addEventListener('DOMContentLoaded', async () => {
     await loadLiveData();
@@ -453,6 +767,9 @@
     initFilters();
     updateCurrencyDisplay();
     renderNews();
+    initNewsFilters();
     updateSummary();
+    renderSparklines();
+    initChartExpanders();
   });
 })();

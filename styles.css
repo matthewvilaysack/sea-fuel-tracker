@@ -676,6 +676,16 @@ a:hover { opacity: 0.7; }
   color: var(--text-muted);
 }
 
+.news-country-tag {
+  font-size: 9px;
+  font-weight: 500;
+  color: var(--accent);
+  background: rgba(156, 179, 201, 0.08);
+  padding: 1px 6px;
+  border-radius: 3px;
+  letter-spacing: 0.03em;
+}
+
 /* ── Sources ─────────────────────────────────────── */
 .sources-section {
   padding: 28px;
@@ -805,6 +815,77 @@ a:hover { opacity: 0.7; }
 
 .news-item:nth-child(n) { animation-delay: calc(0.04s * var(--i, 1)); }
 
+/* ── Sparklines & Charts ────────────────────────── */
+.card-sparkline {
+  width: 100%;
+  height: 32px;
+  margin: 8px 0 4px;
+  cursor: pointer;
+  opacity: 0.8;
+  transition: opacity 0.3s var(--ease);
+}
+
+.card-sparkline:hover { opacity: 1; }
+
+.sparkline-svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.card-chart-expand {
+  overflow: hidden;
+  transition: max-height 0.3s var(--ease);
+  margin-bottom: 8px;
+}
+
+.chart-controls {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 8px;
+}
+
+.chart-range-btn {
+  font-family: var(--font-sans);
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 3px 10px;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.3s var(--ease);
+}
+
+.chart-range-btn:hover {
+  border-color: var(--border-hover);
+  color: var(--text-secondary);
+}
+
+.chart-range-btn.active {
+  color: var(--text-primary);
+  border-color: var(--border-hover);
+  background: var(--bg-subtle);
+}
+
+.chart-expanded {
+  width: 100%;
+  background: var(--bg-subtle);
+  border-radius: var(--radius-sm);
+  padding: 8px;
+}
+
+.expanded-chart-svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.chart-hover-rect { cursor: crosshair; }
+
 /* ── City Accordion ─────────────────────────────── */
 .city-accordion {
   margin-top: 10px;
@@ -874,23 +955,297 @@ a:hover { opacity: 0.7; }
   text-align: right;
 }
 
-/* ── Responsive ─────────────────────────────────── */
-@media (max-width: 768px) {
-  .header { padding: 16px 20px; }
-  .header-right { gap: 16px; }
-  .summary-bar { padding: 0 16px; }
-  .summary-count { font-size: 17px; }
-  .main { padding: 24px 20px; gap: 36px; }
-  #map { height: 320px; }
-  .cards-grid { grid-template-columns: 1fr; }
-  .context-grid { grid-template-columns: 1fr; }
+/* ── Province/Detail rows ─────────────────────────── */
+.detail-subheader {
+  font-size: 9px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 8px 0 4px 0;
+  border-top: 1px solid rgba(255,255,255,0.04);
+  margin-top: 4px;
 }
 
+.province-header-row {
+  display: grid;
+  grid-template-columns: 1fr auto auto auto;
+  gap: 8px;
+  padding: 2px 0 4px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+
+.province-col-label {
+  font-size: 9px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-weight: 500;
+  min-width: 44px;
+  text-align: right;
+}
+
+.province-row {
+  display: grid;
+  grid-template-columns: 1fr auto auto auto;
+  gap: 8px;
+  align-items: baseline;
+  padding: 4px 0;
+  font-size: 11px;
+  border-bottom: 1px solid rgba(255,255,255,0.03);
+}
+.province-row:last-child { border-bottom: none; }
+
+.province-row .city-price {
+  min-width: 44px;
+  text-align: right;
+}
+
+/* ── Touch & Mobile Foundations ──────────────────── */
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  overflow-x: hidden;
+  touch-action: manipulation;
+}
+
+.filter-btn,
+.chart-range-btn,
+.city-toggle,
+.currency-select {
+  min-height: 44px;
+  min-width: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ── Responsive: Tablet ─────────────────────────── */
+@media (max-width: 768px) {
+  html { font-size: 14px; }
+
+  .header {
+    padding: 14px 16px;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .header-right {
+    gap: 12px;
+    width: 100%;
+    flex-wrap: wrap;
+  }
+
+  .global-price .label { font-size: 9px; }
+  .global-price .value { font-size: 12px; }
+  .global-price .change { font-size: 9px; }
+
+  .last-updated { font-size: 10px; }
+
+  .summary-bar {
+    padding: 0 12px;
+    flex-wrap: wrap;
+  }
+
+  .summary-item {
+    min-width: calc(50% - 1px);
+    flex: 0 0 calc(50% - 1px);
+    padding: 10px 8px;
+  }
+
+  .summary-count { font-size: 17px; }
+  .summary-label { font-size: 9px; }
+
+  .main { padding: 20px 16px; gap: 32px; }
+
+  #map { height: 300px; }
+
+  .map-legend {
+    bottom: 10px;
+    left: 10px;
+    padding: 10px 12px;
+  }
+
+  .map-legend h3 { font-size: 8px; margin-bottom: 6px; }
+  .legend-item { font-size: 9px; gap: 6px; margin-bottom: 3px; }
+  .legend-dot { width: 6px; height: 6px; }
+
+  .cards-grid { grid-template-columns: 1fr; }
+  .context-grid { grid-template-columns: 1fr; }
+
+  .country-card { padding: 16px; }
+  .card-country-name { font-size: 15px; }
+  .card-summary { font-size: 11px; }
+  .price-label { font-size: 8px; }
+  .factor-tag { font-size: 8px; }
+
+  .section-header { flex-direction: column; align-items: flex-start; gap: 10px; }
+  .filter-row { width: 100%; }
+
+  .currency-select { width: 100%; }
+
+  /* News filters: horizontal scroll */
+  #news-filters {
+    display: flex;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    gap: 6px;
+    padding-bottom: 4px;
+    max-width: 100%;
+  }
+
+  #news-filters::-webkit-scrollbar { display: none; }
+  #news-filters .filter-btn { flex-shrink: 0; }
+
+  .news-item {
+    flex-direction: column;
+    gap: 8px;
+    padding: 12px 14px;
+  }
+
+  .news-category { align-self: flex-start; }
+
+  .news-meta {
+    flex-wrap: wrap;
+    gap: 4px 8px;
+  }
+
+  .news-title { font-size: 12px; }
+
+  .sources-section { padding: 18px; }
+  .sources-note { font-size: 11px; }
+  .source-links a { font-size: 10px; padding: 4px 10px; }
+
+  .footer { padding: 20px 16px; font-size: 10px; }
+
+  /* Expanded charts responsive */
+  .expanded-chart-svg {
+    width: 100%;
+    height: auto;
+  }
+
+  .chart-expanded {
+    padding: 6px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Province grid: horizontal scroll */
+  .province-header-row,
+  .province-row {
+    min-width: 280px;
+  }
+
+  .city-accordion {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Leaflet popup mobile */
+  .leaflet-popup-content-wrapper {
+    max-width: 260px !important;
+  }
+
+  .leaflet-popup-content {
+    margin: 10px 12px !important;
+  }
+
+  .popup-content h4 { font-size: 13px; }
+  .popup-content p { font-size: 10px; }
+  .popup-prices { font-size: 10px; gap: 8px; }
+}
+
+/* ── Responsive: Small Phone (≤480px) ───────────── */
 @media (max-width: 480px) {
   html { font-size: 14px; }
-  .header { flex-direction: column; align-items: flex-start; }
-  .summary-bar { flex-wrap: wrap; }
-  .summary-item { min-width: 50%; }
+
+  .header { padding: 12px 14px; gap: 8px; }
+
+  .logo-icon { font-size: 18px; }
+  .logo h1 { font-size: 15px; }
+  .subtitle { font-size: 10px; }
+
+  .header-right {
+    gap: 8px;
+  }
+
+  .global-price { gap: 4px; }
+  .global-price .label { font-size: 8px; }
+  .global-price .value { font-size: 11px; }
+
+  .summary-item { padding: 8px 6px; }
+  .summary-count { font-size: 16px; }
+
+  .main { padding: 16px 12px; gap: 24px; }
+
+  #map { height: 280px; }
+
+  .map-legend {
+    bottom: 8px;
+    left: 8px;
+    padding: 8px 10px;
+    max-width: 140px;
+  }
+
+  .map-legend h3 { font-size: 7px; }
+  .legend-item { font-size: 8px; }
+
+  .country-card { padding: 14px; }
+  .card-country-name { font-size: 14px; }
+  .card-severity-badge { font-size: 8px; padding: 3px 8px; }
+  .card-prices { grid-template-columns: 1fr 1fr; }
+  .price-item { padding: 8px 10px; }
+  .price-value { font-size: 12px; }
+  .price-label { font-size: 8px; }
+  .card-summary { font-size: 11px; line-height: 1.5; }
+  .card-reserve { gap: 8px; }
+  .reserve-label { font-size: 10px; }
+
+  /* Thailand fuel type: 2 cols, 1 col on very small */
+  .city-row {
+    font-size: 10px;
+  }
+
+  .city-name { font-size: 10px; }
+  .city-price { font-size: 10px; }
+  .city-local { font-size: 9px; min-width: 50px; }
+
+  .context-card { padding: 16px; }
+  .context-card h3 { font-size: 13px; }
+  .context-card p { font-size: 11px; }
+
+  .news-item { padding: 10px 12px; }
+  .news-title { font-size: 12px; }
+  .news-source { font-size: 9px; }
+  .news-date { font-size: 9px; }
+  .news-country-tag { font-size: 8px; }
+
+  .section-title { font-size: 10px; letter-spacing: 0.1em; }
+
+  .filter-btn { font-size: 9px; padding: 5px 10px; }
+  .chart-range-btn { font-size: 8px; padding: 3px 8px; }
+}
+
+/* ── Responsive: Very small (≤320px) ────────────── */
+@media (max-width: 320px) {
+  .header { padding: 10px 10px; }
+  .main { padding: 12px 8px; gap: 20px; }
+
+  .summary-item { padding: 6px 4px; }
+  .summary-count { font-size: 14px; }
+  .summary-label { font-size: 8px; }
+
+  .country-card { padding: 12px; }
   .card-prices { grid-template-columns: 1fr; }
-  .main { padding: 20px 16px; gap: 28px; }
+
+  .map-legend { display: none; }
+
+  #map { height: 240px; }
+
+  .logo h1 { font-size: 14px; }
+  .subtitle { font-size: 9px; }
 }
