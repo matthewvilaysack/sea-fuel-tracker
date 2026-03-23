@@ -356,18 +356,7 @@
   let activeNewsFilter = 'all';
 
   function initNewsFilters() {
-    const container = document.getElementById('news-filters');
-    const btn = document.createElement('button');
-    btn.className = 'filter-btn active';
-    btn.dataset.filter = 'all';
-    btn.textContent = 'All';
-    btn.addEventListener('click', () => {
-      activeNewsFilter = 'all';
-      container.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      filterNews();
-    });
-    container.appendChild(btn);
+    const select = document.getElementById('news-country-select');
 
     // Get unique countries from news
     const countriesInNews = new Set();
@@ -377,17 +366,15 @@
     });
 
     [...countriesInNews].sort().forEach(country => {
-      const b = document.createElement('button');
-      b.className = 'filter-btn';
-      b.dataset.filter = country;
-      b.textContent = country;
-      b.addEventListener('click', () => {
-        activeNewsFilter = country;
-        container.querySelectorAll('.filter-btn').forEach(x => x.classList.remove('active'));
-        b.classList.add('active');
-        filterNews();
-      });
-      container.appendChild(b);
+      const opt = document.createElement('option');
+      opt.value = country;
+      opt.textContent = country;
+      select.appendChild(opt);
+    });
+
+    select.addEventListener('change', () => {
+      activeNewsFilter = select.value;
+      filterNews();
     });
   }
 
